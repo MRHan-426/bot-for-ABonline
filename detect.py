@@ -13,6 +13,13 @@ PRICE_REGION = (920, 473, 120, 531)
 BUY_COMFIRMATION_POS = (1008, 860) # 954~1050  850~880 
 MINUS_SIGN_POS = (651, 708) # range 5
 
+PRICE_TABLE = np.array([[3],
+                        [4.0, 4.1, 4.2],
+                        [5.0, 5.1, 5.2],
+                        [6.0, 6.1, 6.2],
+                        [7.0, 7.1]])
+OPTIONAL_PRICE_TABLE = np.array([4.3, 5.3, 6.3, 8.0, 8.1])
+
 class autoBuy():
     def __init__(self, parent=None):
         """!
@@ -51,7 +58,7 @@ class autoBuy():
         @brief      Use paddle ocr to get the prices.
 
         """
-        result = ocr.ocr(self.price_region, cls=True)
+        result = ocr.ocr(self.screen, cls=True)
         for idx in range(len(result)):
             res = result[idx]
             if res != None:
@@ -59,13 +66,15 @@ class autoBuy():
                     print(line)
 
         result = result[0]
-        boxes = [line[0] for line in result]
-        txts = [line[1][0] for line in result]
-        scores = [line[1][1] for line in result]
-        im_show = draw_ocr(self.price_region, boxes, txts, scores, font_path='./fonts/simfang.ttf')
-        im_show = Image.fromarray(im_show)
-        return np.array(im_show)
-
+        if result != None:
+            boxes = [line[0] for line in result]
+            txts = [line[1][0] for line in result]
+            scores = [line[1][1] for line in result]
+            im_show = draw_ocr(self.screen, boxes, txts, scores, font_path='./fonts/simfang.ttf')
+            im_show = Image.fromarray(im_show)
+            return np.array(im_show)
+        else:
+            return np.array(self.screen)
         # cv2.destroyAllWindows()
         # im_show.save('image/result.jpg')
         # cv2.imwrite("image/screen2.jpg", self.price_region)
@@ -99,6 +108,45 @@ class autoBuy():
 
         """
         pyautogui.click()
+
+    def store_money_in_guild_account(self):
+        pass
+
+    def take_out_money_from_guild_account(self):
+        pass
+
+    def log_out(self):
+        pass
+
+    def log_in(self, account):
+        pass
+
+    def open_market(self):
+        pass
+
+    def swipe_down(self):
+        pass
+
+    def turn_page(self):
+        pass
+
+    def search_for_item(self, name):
+        pass
+
+    def reset_filter_settings(self):
+        pass
+
+    def create_buy_order(self):
+        pass
+
+    def current_order_invalid(self):
+        pass
+
+    def money_not_enough(self):
+        pass
+    
+    def calculate_max_price(self):
+        pass
 
 
 if __name__ == '__main__':
