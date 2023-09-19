@@ -7,7 +7,9 @@ from PIL import Image
 
 ocr = PaddleOCR(use_angle_cls=True, lang="en")  # need to run only once to download and load model into memory
 print("ocr initialization success")
+
 BUTTON_BUY = cv2.imread('image/button_buy.jpg', cv2.IMREAD_GRAYSCALE)
+
 MARKET_REGION = (338, 315, 900, 700)
 PRICE_REGION = (920, 473, 120, 531)
 BUY_COMFIRMATION_POS = (1008, 860) # 954~1050  850~880 
@@ -20,7 +22,7 @@ PRICE_TABLE = np.array([[3],
                         [7.0, 7.1]])
 OPTIONAL_PRICE_TABLE = np.array([4.3, 5.3, 6.3, 8.0, 8.1])
 
-class autoBuy():
+class purchaseBot():
     def __init__(self, parent=None):
         """!
         @brief      Constructs a new instance.
@@ -151,11 +153,11 @@ class autoBuy():
 
 if __name__ == '__main__':
 
-    aB = autoBuy()
+    pBot = purchaseBot()
     while(True):
-        # aB.find_buy_button()
-        aB.update_screenshot()
-        img = aB.read_price_from_screen()
+        # pBot.find_buy_button()
+        pBot.update_screenshot()
+        img = pBot.read_price_from_screen()
         cv2.imshow("Price_OCR", img)
         cv2.waitKey(1000)
     cv2.destroyAllWindows()
