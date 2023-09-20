@@ -3,12 +3,12 @@ import numpy as np
 import pyautogui
 import time
 import random
-from paddleocr import PaddleOCR, draw_ocr
 from PIL import Image
+from paddleocr import PaddleOCR, draw_ocr
 
 ocr = PaddleOCR(use_angle_cls=True, lang="en")  
 # # need to run only once to download and load model into memory
-# print("ocr initialization success")
+print("ocr initialization success")
 
 BUTTON_BUY = cv2.imread('image/button_buy.jpg', cv2.IMREAD_GRAYSCALE)
 REACH_BOTTOM = cv2.imread('image/reach_bottom.jpg', cv2.IMREAD_GRAYSCALE)
@@ -17,20 +17,15 @@ ERROR_MESSAGE_OK_BUTTON_NO_MONEY = cv2.imread('image/ERROR_MESSAGE_OK_BUTTON_NO_
 
 
 MARKET_REGION = (338, 315, 927, 770)
-PRICE_REGION = (920, 471, 350, 605)
-BUY_COMFIRMATION_POS = (1008, 860) # 954~1050  850~880 
-MINUS_SIGN_POS = (651, 708) # range 5
-
-PRICE_TABLE = np.array([[4.0, 4.1, 4.2, 4.3],
-                        [5.0, 5.1, 5.2, 5.3],
-                        [6.0, 6.1, 6.2, 6.3],
-                        [3, 7.0, 7.1, 8.0]])
+PRICE_REGION = (920, 471, 160, 605)
+BOTTOM_CHECK_REIGION = (920, 471, 350, 605)
 
 ACCOUNT_LIST = []
 with open('account.txt', 'r') as file:
     lines = file.readlines()
 for line in lines[:5]:
     ACCOUNT_LIST.append(line.strip())
+
 
 DICTIONARY_FIBER = ['FLAX',
                     'HEMP',
@@ -48,6 +43,24 @@ DICTIONARY_FIBER = ['FLAX',
                     'SUN',
                     'UN SUN',
                     'GHOST H']
+PRICE_TABLE = { 'FLAX': 50, 
+                'HEMP': 48, 
+                'UN HEMP': 170,
+                'RA HEMP': 970,
+                'EXPONE HEMP': 0,
+                'SKY': 250,
+                'UN SKY': 570,
+                'RA SKY': 1400,
+                'EX SKY': 0,
+                'AM': 740,
+                'UN AM': 1170,
+                'RA AM': 5800,
+                'EX AM': 0,
+                'SUN': 1400,
+                'UN SUN': 4400,
+                'GHOST H': 0
+                }
+
 
 class purchaseBot():
     def __init__(self, parent=None):
@@ -57,7 +70,8 @@ class purchaseBot():
         """
         self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
-        self.gray_screen = cv2.cvtColor(self.screen, cv2.COLOR_BGR2GRAY)
+        # self.gray_screen = cv2.cvtColor(self.screen, cv2.COLOR_BGR2GRAY)
+        self.bottom_check_window = np.array(pyautogui.screenshot(region = BOTTOM_CHECK_REIGION))
 
     def find_buy_button(self):
         """!
@@ -65,7 +79,7 @@ class purchaseBot():
 
         """
         h, w = BUTTON_BUY.shape
-        result = cv2.matchTemplate(self.gray_screen, BUTTON_BUY, cv2.TM_CCOEFF_NORMED)
+        result = cv2.matchTemplate(self.screen, BUTTON_BUY, cv2.TM_CCOEFF_NORMED)
         loc = np.where(result >= 0.8)
         for pt in zip(*loc[::-1]):
             cv2.rectangle(self.screen, pt, (pt[0] + w, pt[1] + h), (0, 255, 0), 2)
@@ -79,8 +93,8 @@ class purchaseBot():
         """
         self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
-        self.gray_screen = cv2.cvtColor(self.screen, cv2.COLOR_BGR2GRAY)    
-        
+        self.bottom_check_window = np.array(pyautogui.screenshot(region = BOTTOM_CHECK_REIGION))
+
 
     def read_price_from_screen(self):
         """!
@@ -90,30 +104,52 @@ class purchaseBot():
         result = ocr.ocr(self.price_region, cls=True)
         for idx in range(len(result)):
             res = result[idx]
-            if res != None:
-                for line in res:
-                    print(line)
+            # if res != None:
+            #     for line in res:
+            #         print(line)
 
         result = result[0]
-        if result != None:
-            boxes = [line[0] for line in result]
-            txts = [line[1][0] for line in result]
-            scores = [line[1][1] for line in result]
-            im_show = draw_ocr(self.price_region, boxes, txts, scores, font_path='./fonts/simfang.ttf')
-            im_show = Image.fromarray(im_show)
-            return np.array(im_show)
-        else:
-            return np.array(self.screen)
-        # cv2.destroyAllWindows()
-        # im_show.save('image/result.jpg')
-        # cv2.imwrite("image/screen2.jpg", self.price_region)
+        return result
 
-    def buy_an_item(self):
-        read_price_from_screen()
+        # if result != None:
+        #     boxes = [line[0] for line in result]
+        #     print(boxes[1])
+        #     txts = [line[1][0] for line in result]
+        #     scores = [line[1][1] for line in result]
+
+        #     im_show = draw_ocr(self.price_region, boxes, txts, scores, font_path='./fonts/simfang.ttf')
+        #     im_show = Image.fromarray(im_show)
+        #     return np.array(im_show)
+        # else:
+        #     return np.array(self.screen)
+
+
+    def buy_an_item(self, max_price):
+        result = self.read_price_from_screen()
+        if result == None:
+            print("Unpredictable ERROR Occurs, please report")
+            return False
+        txts = [line[1][0] for line in result]
+        scores = [line[1][1] for line in result]
+        boxes = [line[0] for line in result]
+        for i in range(len(txts)):
+            price = int(txts[i].replace(',', ''))
+            if  price <= max_price:
+                if  scores[i] >= 0.98:
+                    buy_button_position = (int(boxes[i][0][0] + PRICE_REGION[0] + 216), int(boxes[i][0][1] + PRICE_REGION[1] + 14))
+                    print(buy_button_position)
+                    self.mouse_move(buy_button_position)
+                    time.sleep(0.2)
+                    self.mouse_click()
+                    self.mouse_move((1011, 860), duration=0.15)
+                    time.sleep(0.2)
+                    self.mouse_click()
+                    time.sleep(0.1)
+                    return True
+            else:
+                return False
 
         return False
-        pass
-
 
 
     def mouse_move(self, target, duration=0.3):
@@ -262,12 +298,12 @@ class purchaseBot():
         time.sleep(1) 
         pyautogui.press('enter')
         pyautogui.keyUp('enter')
-        time.sleep(3) 
+        time.sleep(5) 
         
         ENTER_WORLD_BUTTON = (1079, 1022)
         self.mouse_move(ENTER_WORLD_BUTTON)
         self.mouse_click()
-        time.sleep(5) 
+        time.sleep(8) 
 
 
     def open_market(self):
@@ -318,6 +354,7 @@ class purchaseBot():
         
         @param      name: Name of the item to search for.
         """
+        self.reset_filter_settings()
         SEARCH_BOX_POSITION = (435, 344)
         self.mouse_move(SEARCH_BOX_POSITION)
         time.sleep(0.3) 
@@ -349,49 +386,59 @@ class purchaseBot():
 
     def create_buy_order(self):
         pass
-    
-    def calculate_max_price(self):
-        pass
 
 
     def regular_purchase(self, account: str):
-        pBot.mouse_move((794,23))
-        pBot.mouse_click()
+        self.mouse_move((794,23))
+        self.mouse_click()
         time.sleep(1)
 
-        pBot.log_in(str)
+        self.log_in(account)
         time.sleep(0.2)
 
-        pBot.take_out_money_from_guild_account()
+        self.take_out_money_from_guild_account()
         time.sleep(0.2)
 
-        open_market()
+        self.open_market()
         time.sleep(0.2)
 
         for item in DICTIONARY_FIBER:
-            pBot.search_for_item(item)
+            self.search_for_item(item)
+            time.sleep(0.5)
+
+            self.swipe_down() # we don't buy items that remain on top of the market
             time.sleep(0.2)
 
-            pBot.swipe_down() # we don't buy items that remain on top of the market
-            time.sleep(0.2)
+            fail_count = 0
 
-            while(True):
-                pBot.update_screenshot()
-                success = buy_an_item()
+            while True:
+                self.update_screenshot()
+                success = self.buy_an_item(max_price=PRICE_TABLE[item])
+                
                 if success:
-                    pBot.update_screenshot()
+                    self.update_screenshot()
 
-                result = cv2.matchTemplate(pBot.gray_screen, REACH_BOTTOM, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(result)
+                    result = cv2.matchTemplate(self.bottom_check_window, REACH_BOTTOM, cv2.TM_CCOEFF_NORMED)
+                    _, max_val, _, _ = cv2.minMaxLoc(result)
 
-                if max_val >= 0.85:
-                    pBot.turn_page()
+                    if max_val >= 0.85:
+                        self.turn_page()
+                    else:
+                        pass
                 else:
-                    pBot.swipe_down()
+                    fail_count += 1
+                    if fail_count == 2:
+                        break
+                    self.swipe_down()
 
             time.sleep(0.2)
-
-
+        self.store_money_in_guild_account()
+        time.sleep(0.3)
+        pyautogui.press('esc')
+        pyautogui.keyUp('esc')
+        self.log_out()
+        time.sleep(0.2)
+        print("Regular Purchase routine Finish")
 
 
     def purchase_and_create_buy_order(self):
@@ -411,37 +458,18 @@ if __name__ == '__main__':
     '''
         Test
     '''
-    # pBot.mouse_move((2115, 537))
-    # pBot.drag_to((2115, 537))
-    # pBot.reset_filter_settings()
-    # pBot.search_for_item("UN HEMP")
-    # pBot.reset_filter_settings()
-    # pBot.turn_page()
-    # for i in range(5):
-    #     pBot.update_screenshot()
-    #     result = cv2.matchTemplate(pBot.gray_screen, REACH_BOTTOM, cv2.TM_CCOEFF_NORMED)
-    #     _, max_val, _, _ = cv2.minMaxLoc(result)
-    #     if max_val >= 0.85:
-    #         pBot.turn_page()
-    #     else:
-    #         pBot.swipe_down()
 
-    # pyautogui.press('esc')
-    # pyautogui.keyUp('esc')
-    # pBot.log_out()
     pBot.mouse_move((794,23))
     pBot.mouse_click()
     time.sleep(1)
-    # pBot.take_out_money_from_guild_account()
-    # pBot.store_money_in_guild_account()
+    print(ACCOUNT_LIST[0])
+    pBot.regular_purchase(ACCOUNT_LIST[0])
+
     
-    while(True):
-        # pBot.find_buy_button()
-        pBot.update_screenshot()
-        img = pBot.read_price_from_screen()
-        cv2.imshow("Price_OCR", img)
-        cv2.waitKey(500) #ms
-    cv2.destroyAllWindows()
-
-
-
+    # while(True):
+    #     # pBot.find_buy_button()
+    #     pBot.update_screenshot()
+    #     img = pBot.read_price_from_screen()
+    #     cv2.imshow("Price_OCR", img)
+    #     cv2.waitKey(500) #ms
+    # cv2.destroyAllWindows()
