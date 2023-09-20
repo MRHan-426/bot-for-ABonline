@@ -26,7 +26,11 @@ PRICE_TABLE = np.array([[4.0, 4.1, 4.2, 4.3],
                         [6.0, 6.1, 6.2, 6.3],
                         [3, 7.0, 7.1, 8.0]])
 
-ACCOUNT_LIST = ['mail1', 'mail2', 'mail3', 'mail4', 'mail5']
+ACCOUNT_LIST = []
+with open('account.txt', 'r') as file:
+    lines = file.readlines()
+for line in lines[:5]:
+    ACCOUNT_LIST.append(line.strip())
 
 DICTIONARY_FIBER = ['FLAX',
                     'HEMP',
@@ -428,7 +432,6 @@ if __name__ == '__main__':
     pBot.mouse_move((794,23))
     pBot.mouse_click()
     time.sleep(1)
-    # pBot.log_in("hzq_even31@outlook.com")
     # pBot.take_out_money_from_guild_account()
     # pBot.store_money_in_guild_account()
     
