@@ -15,6 +15,9 @@ REACH_BOTTOM = cv2.imread('image/reach_bottom.jpg', cv2.IMREAD_GRAYSCALE)
 ERROR_MESSAGE_OK_BUTTON_INVALID_ORDER = cv2.imread('image/ERROR_MESSAGE_OK_BUTTON_INVALID_ORDER.jpg', cv2.IMREAD_GRAYSCALE)
 ERROR_MESSAGE_OK_BUTTON_NO_MONEY = cv2.imread('image/ERROR_MESSAGE_OK_BUTTON_NO_MONEY.jpg', cv2.IMREAD_GRAYSCALE)
 
+FRACTION_WARFARE_CLOSE_BUTTON = (1143, 285)
+ACTIVITIES_CLOSE_BUTTON = (1143, 285)
+TWITCH_DROPS_CLOSE_BUTTON = (1266, 399)
 
 MARKET_REGION = (338, 315, 927, 770)
 PRICE_REGION = (920, 471, 160, 605)
@@ -466,10 +469,12 @@ if __name__ == '__main__':
     pBot.mouse_move((794,23))
     pBot.mouse_click()
     time.sleep(1)
-    print(ACCOUNT_LIST[0])
-    pBot.regular_purchase(ACCOUNT_LIST[0])
+    for i in ACCOUNT_LIST[1:]:
+        print(i)
+        pBot.regular_purchase(i)
+        time.sleep(3)
 
-    
+
     # while(True):
     #     # pBot.find_buy_button()
     #     pBot.update_screenshot()
