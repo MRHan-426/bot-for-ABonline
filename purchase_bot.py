@@ -45,14 +45,14 @@ DICTIONARY_FIBER = ['FLAX',
                     'GHOST H']
 PRICE_TABLE = { 'FLAX': 50, 
                 'HEMP': 48, 
-                'UN HEMP': 170,
-                'RA HEMP': 970,
-                'EXPONE HEMP': 0,
-                'SKY': 250,
-                'UN SKY': 570,
+                'UN HEMP': 175,
+                'RA HEMP': 980,
+                'EXPONE HEMP': 6800,
+                'SKY': 260,
+                'UN SKY': 580,
                 'RA SKY': 1400,
-                'EX SKY': 0,
-                'AM': 740,
+                'EX SKY': 8000,
+                'AM': 745,
                 'UN AM': 1170,
                 'RA AM': 5800,
                 'EX AM': 0,
@@ -70,8 +70,9 @@ class purchaseBot():
         """
         self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
-        # self.gray_screen = cv2.cvtColor(self.screen, cv2.COLOR_BGR2GRAY)
         self.bottom_check_window = np.array(pyautogui.screenshot(region = BOTTOM_CHECK_REIGION))
+        self.bottom_check_window = cv2.cvtColor(self.bottom_check_window, cv2.COLOR_BGR2GRAY)
+
 
     def find_buy_button(self):
         """!
@@ -94,6 +95,7 @@ class purchaseBot():
         self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
         self.bottom_check_window = np.array(pyautogui.screenshot(region = BOTTOM_CHECK_REIGION))
+        self.bottom_check_window = cv2.cvtColor(self.bottom_check_window, cv2.COLOR_BGR2GRAY)
 
 
     def read_price_from_screen(self):
@@ -133,9 +135,9 @@ class purchaseBot():
         scores = [line[1][1] for line in result]
         boxes = [line[0] for line in result]
         for i in range(len(txts)):
-            price = int(txts[i].replace(',', ''))
-            if  price <= max_price:
-                if  scores[i] >= 0.98:
+            if  scores[i] >= 0.98:
+                price = int(txts[i].replace(',', ''))
+                if  price <= max_price:
                     buy_button_position = (int(boxes[i][0][0] + PRICE_REGION[0] + 216), int(boxes[i][0][1] + PRICE_REGION[1] + 14))
                     print(buy_button_position)
                     self.mouse_move(buy_button_position)
@@ -146,8 +148,10 @@ class purchaseBot():
                     self.mouse_click()
                     time.sleep(0.1)
                     return True
+                else:
+                    return False
             else:
-                return False
+                pass
 
         return False
 
