@@ -3,6 +3,7 @@ import numpy as np
 import pyautogui
 import time
 import random
+from typing import List
 from PIL import Image
 from paddleocr import PaddleOCR, draw_ocr
 
@@ -20,8 +21,9 @@ ACTIVITIES_CLOSE_BUTTON = (1143, 285)
 TWITCH_DROPS_CLOSE_BUTTON = (1266, 399)
 
 MARKET_REGION = (338, 315, 927, 770)
-PRICE_REGION = (920, 471, 160, 605)
 BOTTOM_CHECK_REIGION = (920, 471, 350, 605)
+BUY_ORDER_PRICE_REGION = (716, 723, 91, 57)
+PRICE_REGION = (920, 471, 160, 605)
 
 ACCOUNT_LIST = []
 with open('account.txt', 'r') as file:
@@ -30,22 +32,6 @@ for line in lines[:5]:
     ACCOUNT_LIST.append(line.strip())
 
 
-DICTIONARY_FIBER = ['FLAX',
-                    'HEMP',
-                    'UN HEMP',
-                    'RA HEMP',
-                    'EXPONE HEMP',
-                    'SKY',
-                    'UN SKY',
-                    'RA SKY',
-                    'EX SKY',
-                    'AM',
-                    'UN AM',
-                    'RA AM',
-                    'EX AM',
-                    'SUN',
-                    'UN SUN',
-                    'GHOST H']
 PRICE_TABLE = { 'FLAX': 50, 
                 'HEMP': 48, 
                 'UN HEMP': 175,
@@ -64,6 +50,24 @@ PRICE_TABLE = { 'FLAX': 50,
                 'GHOST H': 0
                 }
 
+BUY_ORDER_TABLE = { 'FLAX':         [50,    [9999, 6666]], # max_price, large_amount, small_amount 
+                    'HEMP':         [48,    [9999, 6666]], 
+                    'UN HEMP':      [175,   [7777, 5000]],
+                    'RA HEMP':      [980,   [1333, 666]],
+                    'EXPONE HEMP':  [6800,  [300, 150]],
+                    'SKY':          [260,   [9999, 4444]],
+                    'UN SKY':       [580,   [3333, 1666]],
+                    'RA SKY':       [1400,  [1111, 666]],
+                    'EX SKY':       [8000,  [300, 150]],
+                    'AM':           [745,   [4444, 2666]],
+                    'UN AM':        [1170,  [1666, 600]],
+                    'RA AM':        [5800,  [300, 150]],
+                    'EX AM':        [0,     [150, 50]],
+                    'SUN':          [1400,  [1666, 888]],
+                    'UN SUN':       [4400,  [600, 300]],
+                    'GHOST H':      [0,     [450, 200]]
+                }
+
 
 class purchaseBot():
     def __init__(self, parent=None):
@@ -73,6 +77,8 @@ class purchaseBot():
         """
         self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
+        self.buy_order_price_region = np.array(pyautogui.screenshot(region = BUY_ORDER_PRICE_REGION))
+
         self.bottom_check_window = np.array(pyautogui.screenshot(region = BOTTOM_CHECK_REIGION))
         self.bottom_check_window = cv2.cvtColor(self.bottom_check_window, cv2.COLOR_BGR2GRAY)
 
@@ -97,43 +103,43 @@ class purchaseBot():
         """
         self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
+        self.buy_order_price_region = np.array(pyautogui.screenshot(region = BUY_ORDER_PRICE_REGION))
+
         self.bottom_check_window = np.array(pyautogui.screenshot(region = BOTTOM_CHECK_REIGION))
         self.bottom_check_window = cv2.cvtColor(self.bottom_check_window, cv2.COLOR_BGR2GRAY)
 
 
-    def read_price_from_screen(self):
+    def read_price_from_screen(self, region: tuple):
         """!
         @brief      Use paddle ocr to get the prices.
 
         """
-        result = ocr.ocr(self.price_region, cls=True)
-        for idx in range(len(result)):
-            res = result[idx]
-            # if res != None:
-            #     for line in res:
-            #         print(line)
-
+        result = ocr.ocr(region, cls=True)
         result = result[0]
         return result
 
         # if result != None:
         #     boxes = [line[0] for line in result]
-        #     print(boxes[1])
         #     txts = [line[1][0] for line in result]
         #     scores = [line[1][1] for line in result]
 
-        #     im_show = draw_ocr(self.price_region, boxes, txts, scores, font_path='./fonts/simfang.ttf')
+        #     im_show = draw_ocr(region, boxes, txts, scores, font_path='./fonts/simfang.ttf')
         #     im_show = Image.fromarray(im_show)
         #     return np.array(im_show)
         # else:
         #     return np.array(self.screen)
 
 
-    def buy_an_item(self, max_price):
-        result = self.read_price_from_screen()
+    def buy_an_item(self, max_price: int):
+        """!
+        @brief      Buy an item that is below the max price.
+                    If buy successfully, return true.
+
+        """
+        result = self.read_price_from_screen(region = self.price_region)
         if result == None:
             print("Unpredictable ERROR Occurs, please report")
-            return False
+            return False, result
         txts = [line[1][0] for line in result]
         scores = [line[1][1] for line in result]
         boxes = [line[0] for line in result]
@@ -142,7 +148,7 @@ class purchaseBot():
                 price = int(txts[i].replace(',', ''))
                 if  price <= max_price:
                     buy_button_position = (int(boxes[i][0][0] + PRICE_REGION[0] + 216), int(boxes[i][0][1] + PRICE_REGION[1] + 14))
-                    print(buy_button_position)
+                    # print(buy_button_position)
                     self.mouse_move(buy_button_position)
                     time.sleep(0.2)
                     self.mouse_click()
@@ -150,13 +156,13 @@ class purchaseBot():
                     time.sleep(0.2)
                     self.mouse_click()
                     time.sleep(0.1)
-                    return True
+                    return True, result
                 else:
-                    return False
+                    return False, result
             else:
                 pass
 
-        return False
+        return False, result
 
 
     def mouse_move(self, target, duration=0.3):
@@ -391,10 +397,6 @@ class purchaseBot():
         time.sleep(0.3) 
 
 
-    def create_buy_order(self):
-        pass
-
-
     def regular_purchase(self, account: str):
         self.mouse_move((794,23))
         self.mouse_click()
@@ -409,7 +411,7 @@ class purchaseBot():
         self.open_market()
         time.sleep(0.2)
 
-        for item in DICTIONARY_FIBER:
+        for item in PRICE_TABLE.keys():
             self.search_for_item(item)
             time.sleep(0.5)
 
@@ -420,7 +422,7 @@ class purchaseBot():
 
             while True:
                 self.update_screenshot()
-                success = self.buy_an_item(max_price=PRICE_TABLE[item])
+                success, result = self.buy_an_item(max_price=PRICE_TABLE[item])
                 
                 if success:
                     self.update_screenshot()
@@ -448,8 +450,173 @@ class purchaseBot():
         print("Regular Purchase routine Finish")
 
 
-    def purchase_and_create_buy_order(self):
-        pass
+    def create_buy_order(self, amount: List[int], max_price: int):
+        BUY_ORDER_BUTTON_POSITION = (650, 644)
+        self.mouse_move(BUY_ORDER_BUTTON_POSITION)
+        time.sleep(0.2)
+        self.mouse_click()
+        self.update_screenshot()
+        time.sleep(0.2)
+        result = self.read_price_from_screen(region = self.buy_order_price_region)
+        if result == None:
+            print("Unpredictable ERROR Occurs, please report RESULT == NONE")
+            return False
+        txts = [line[1][0] for line in result]
+        scores = [line[1][1] for line in result]
+        boxes = [line[0] for line in result]
+        if len(txts) > 1:
+            print("Unpredictable ERROR Occurs, please report TXTS > 1")
+            return False
+        price = int(txts[0].replace(',', ''))
+
+        # price range
+        if  price >= max_price:
+            self.mouse_move((1070, 387))
+            time.sleep(0.2)
+            self.mouse_click()
+            time.sleep(0.2)
+            return False
+
+        elif  price < max_price * 0.925:
+            SET_BUY_ORDER_AMOUNT = (665, 684)
+            self.mouse_move(SET_BUY_ORDER_AMOUNT)
+            time.sleep(0.2)
+            pyautogui.mouseDown()
+            time.sleep(0.3) 
+            pyautogui.mouseUp()
+            pyautogui.typewrite(str(amount[0]))
+            time.sleep(0.5)
+
+            SET_BUY_ORDER_PRICE = (720, 747)
+            self.mouse_move(SET_BUY_ORDER_PRICE)
+            time.sleep(0.2)
+            pyautogui.mouseDown()
+            time.sleep(0.3) 
+            pyautogui.mouseUp()
+            pyautogui.typewrite(str(int(max_price * 0.90) + 1))
+            time.sleep(0.5)
+            
+        elif price < max_price * 0.975 and price >= max_price * 0.925:
+            SET_BUY_ORDER_AMOUNT = (665, 684)
+            self.mouse_move(SET_BUY_ORDER_AMOUNT)
+            time.sleep(0.2)
+            pyautogui.mouseDown()
+            time.sleep(0.3) 
+            pyautogui.mouseUp()
+            pyautogui.typewrite(str(amount[0]))
+            time.sleep(0.5)
+
+            PRICE_ADD_BUTTON_POSITION = (983, 749)
+            self.mouse_move(PRICE_ADD_BUTTON_POSITION)
+            time.sleep(0.2)
+            self.mouse_click()
+            time.sleep(0.2)
+
+        elif price < max_price and price >= max_price * 0.975:
+            SET_BUY_ORDER_AMOUNT = (665, 684)
+            self.mouse_move(SET_BUY_ORDER_AMOUNT)
+            time.sleep(0.2)
+            pyautogui.mouseDown()
+            time.sleep(0.3) 
+            pyautogui.mouseUp()
+            pyautogui.typewrite(str(amount[1]))
+            time.sleep(0.5)
+
+            PRICE_ADD_BUTTON_POSITION = (983, 749)
+            self.mouse_move(PRICE_ADD_BUTTON_POSITION)
+            time.sleep(0.2)
+            self.mouse_click()
+            time.sleep(0.2)
+
+        CREATE_BUY_ORDER_BUTTON_POSITION = (1011, 860)
+        self.mouse_move(CREATE_BUY_ORDER_BUTTON_POSITION)
+        time.sleep(0.2)
+        self.mouse_click()
+        time.sleep(0.2)
+
+        YES_BUTTON_POSITION_1 = (629, 644)
+        YES_BUTTON_POSITION_2 = (629, 654)
+        YES_BUTTON_POSITION_3 = (629, 664)
+        YES_BUTTON_POSITION_4 = (629, 674)
+
+        self.mouse_move(YES_BUTTON_POSITION_1)
+        time.sleep(0.2)
+        self.mouse_click()
+        time.sleep(0.2)
+
+        self.mouse_move(YES_BUTTON_POSITION_2)
+        time.sleep(0.2)
+        self.mouse_click()
+        time.sleep(0.2)
+
+        self.mouse_move(YES_BUTTON_POSITION_3)
+        time.sleep(0.2)
+        self.mouse_click()
+        time.sleep(0.2)
+
+        self.mouse_move(YES_BUTTON_POSITION_4)
+        time.sleep(0.2)
+        self.mouse_click()
+        time.sleep(0.2)
+
+        return True
+
+
+    def purchase_and_create_buy_order(self, account:str):
+        self.mouse_move((794,23))
+        self.mouse_click()
+        time.sleep(1)
+
+        self.log_in(account)
+        time.sleep(0.2)
+
+        self.take_out_money_from_guild_account()
+        time.sleep(0.2)
+
+        self.open_market()
+        time.sleep(0.2)
+
+        for item in BUY_ORDER_TABLE.keys():
+            self.search_for_item(item)
+            time.sleep(0.5)
+
+            self.swipe_down() # we don't buy items that remain on top of the market
+            time.sleep(0.2)
+
+            while True:
+                self.update_screenshot()
+                success, result = self.buy_an_item(max_price= BUY_ORDER_TABLE[item][0])
+                self.update_screenshot()
+                
+                if success:
+                    result = cv2.matchTemplate(self.bottom_check_window, REACH_BOTTOM, cv2.TM_CCOEFF_NORMED)
+                    _, max_val, _, _ = cv2.minMaxLoc(result)
+
+                    if max_val >= 0.85:
+                        self.turn_page()
+                    else:
+                        pass
+                else:
+                    if result != None:
+                        boxes = [line[0] for line in result]
+                        buy_button_position = (int(boxes[0][0][0] + PRICE_REGION[0] + 216), int(boxes[0][0][1] + PRICE_REGION[1] + 14))
+                        self.mouse_move(buy_button_position)
+                        time.sleep(0.2)
+                        self.mouse_click()
+                        time.sleep(0.2)
+                        buyorder_success = self.create_buy_order(BUY_ORDER_TABLE[item][1], BUY_ORDER_TABLE[item][0])
+                        break
+                    else:
+                        break
+
+            time.sleep(0.2)
+        self.store_money_in_guild_account()
+        time.sleep(0.3)
+        pyautogui.press('esc')
+        pyautogui.keyUp('esc')
+        self.log_out()
+        time.sleep(0.2)
+        print("Regular Purchase routine Finish")
 
 
     def current_order_invalid(self):
@@ -469,16 +636,18 @@ if __name__ == '__main__':
     pBot.mouse_move((794,23))
     pBot.mouse_click()
     time.sleep(1)
-    for i in ACCOUNT_LIST[1:]:
+    for i in ACCOUNT_LIST:
         print(i)
-        pBot.regular_purchase(i)
+        # pBot.regular_purchase(i)
+        pBot.purchase_and_create_buy_order(i)
+
         time.sleep(3)
 
 
     # while(True):
     #     # pBot.find_buy_button()
     #     pBot.update_screenshot()
-    #     img = pBot.read_price_from_screen()
+    #     img = pBot.read_price_from_screen(pBot.buy_order_price_region)
     #     cv2.imshow("Price_OCR", img)
     #     cv2.waitKey(500) #ms
     # cv2.destroyAllWindows()
