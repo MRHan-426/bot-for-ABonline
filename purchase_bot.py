@@ -20,6 +20,8 @@ AD_FRACTIONWARFARE = cv2.imread('image/FractionWarfare.jpg', cv2.IMREAD_GRAYSCAL
 AD_TWITCHDROPS = cv2.imread('image/Twitchdrops.jpg', cv2.IMREAD_GRAYSCALE)
 AD_UNCLAIMED_REWARDS = cv2.imread('image/UNCLAIMED_REWARDS.jpg', cv2.IMREAD_GRAYSCALE)
 AD_CROSS_PLATFORM = cv2.imread('image/CROSS_PLATFORM.jpg', cv2.IMREAD_GRAYSCALE)
+AD_STORE = cv2.imread('image/store.jpg', cv2.IMREAD_GRAYSCALE)
+AD_GET_PREMIUM = cv2.imread('image/get_premium.jpg', cv2.IMREAD_GRAYSCALE)
 LOG_OUT = cv2.imread('image/log_out.jpg', cv2.IMREAD_GRAYSCALE)
 
 
@@ -28,6 +30,8 @@ ACTIVITIES_CLOSE_BUTTON = (1143, 285)
 TWITCH_DROPS_CLOSE_BUTTON = (1266, 342)
 UNCLAIMED_REWARDS_CLOSE_BUTTON = (972, 678)
 CROSS_PLATFORM_CLOSE_BUTTON = (1245, 318)
+STORE_CLOSE_BUTTON = (1245, 320)
+GET_PREMIUM_BUTTON = (1245, 320)
 
 
 SCREEN_REGION = (0, 0, 1600, 1245)
@@ -324,12 +328,18 @@ class purchaseBot():
         result_3 = cv2.matchTemplate(self.screen, AD_TWITCHDROPS, cv2.TM_CCOEFF_NORMED)
         result_4 = cv2.matchTemplate(self.screen, AD_UNCLAIMED_REWARDS, cv2.TM_CCOEFF_NORMED)
         result_5 = cv2.matchTemplate(self.screen, AD_CROSS_PLATFORM, cv2.TM_CCOEFF_NORMED)
+        result_6 = cv2.matchTemplate(self.screen, AD_STORE, cv2.TM_CCOEFF_NORMED)
+        result_7 = cv2.matchTemplate(self.screen, AD_GET_PREMIUM, cv2.TM_CCOEFF_NORMED)
+
 
         _, max_val_1, _, _ = cv2.minMaxLoc(result_1)
         _, max_val_2, _, _ = cv2.minMaxLoc(result_2)
         _, max_val_3, _, _ = cv2.minMaxLoc(result_3)
         _, max_val_4, _, _ = cv2.minMaxLoc(result_4)
         _, max_val_5, _, _ = cv2.minMaxLoc(result_5)
+        _, max_val_6, _, _ = cv2.minMaxLoc(result_6)
+        _, max_val_7, _, _ = cv2.minMaxLoc(result_7)
+
 
         if max_val_4 >= 0.85:
             self.mouse_move(UNCLAIMED_REWARDS_CLOSE_BUTTON)
@@ -361,6 +371,17 @@ class purchaseBot():
             self.mouse_click()
             return True
 
+        elif max_val_6 >= 0.85:
+            self.mouse_move(STORE_CLOSE_BUTTON)
+            time.sleep(0.3)
+            self.mouse_click()
+            return True
+
+        elif max_val_7 >= 0.85:
+            self.mouse_move(GET_PREMIUM_BUTTON)
+            time.sleep(0.3)
+            self.mouse_click()
+            return True       
         return False
 
 
@@ -678,12 +699,10 @@ if __name__ == '__main__':
     pBot.mouse_move((794,23))
     pBot.mouse_click()
     time.sleep(1)
-    for i in ACCOUNT_LIST:
+    for i in ACCOUNT_LIST[:5]:
         print(i)
         pBot.regular_purchase(i)
         # pBot.purchase_and_create_buy_order(i)
-        # pBot.log_in(i)
-        # pBot.log_out()
         time.sleep(3)
 
 
