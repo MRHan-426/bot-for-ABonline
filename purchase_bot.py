@@ -15,12 +15,22 @@ BUTTON_BUY = cv2.imread('image/button_buy.jpg', cv2.IMREAD_GRAYSCALE)
 REACH_BOTTOM = cv2.imread('image/reach_bottom.jpg', cv2.IMREAD_GRAYSCALE)
 ERROR_MESSAGE_OK_BUTTON_INVALID_ORDER = cv2.imread('image/ERROR_MESSAGE_OK_BUTTON_INVALID_ORDER.jpg', cv2.IMREAD_GRAYSCALE)
 ERROR_MESSAGE_OK_BUTTON_NO_MONEY = cv2.imread('image/ERROR_MESSAGE_OK_BUTTON_NO_MONEY.jpg', cv2.IMREAD_GRAYSCALE)
+AD_ACTIVITIES = cv2.imread('image/Activities.jpg', cv2.IMREAD_GRAYSCALE)
+AD_FRACTIONWARFARE = cv2.imread('image/FractionWarfare.jpg', cv2.IMREAD_GRAYSCALE)
+AD_TWITCHDROPS = cv2.imread('image/Twitchdrops.jpg', cv2.IMREAD_GRAYSCALE)
+AD_UNCLAIMED_REWARDS = cv2.imread('image/UNCLAIMED_REWARDS.jpg', cv2.IMREAD_GRAYSCALE)
+AD_CROSS_PLATFORM = cv2.imread('image/CROSS_PLATFORM.jpg', cv2.IMREAD_GRAYSCALE)
+LOG_OUT = cv2.imread('image/log_out.jpg', cv2.IMREAD_GRAYSCALE)
+
 
 FRACTION_WARFARE_CLOSE_BUTTON = (1143, 285)
 ACTIVITIES_CLOSE_BUTTON = (1143, 285)
-TWITCH_DROPS_CLOSE_BUTTON = (1266, 399)
+TWITCH_DROPS_CLOSE_BUTTON = (1266, 342)
+UNCLAIMED_REWARDS_CLOSE_BUTTON = (972, 678)
+CROSS_PLATFORM_CLOSE_BUTTON = (1245, 318)
 
-MARKET_REGION = (338, 315, 927, 770)
+
+SCREEN_REGION = (0, 0, 1600, 1245)
 BOTTOM_CHECK_REIGION = (920, 471, 350, 605)
 BUY_ORDER_PRICE_REGION = (716, 723, 91, 57)
 PRICE_REGION = (920, 471, 160, 605)
@@ -28,43 +38,26 @@ PRICE_REGION = (920, 471, 160, 605)
 ACCOUNT_LIST = []
 with open('account.txt', 'r') as file:
     lines = file.readlines()
-for line in lines[:5]:
+for line in lines:
     ACCOUNT_LIST.append(line.strip())
 
 
-PRICE_TABLE = { 'FLAX': 50, 
-                'HEMP': 48, 
-                'UN HEMP': 175,
-                'RA HEMP': 980,
-                'EXPONE HEMP': 6800,
-                'SKY': 260,
-                'UN SKY': 580,
-                'RA SKY': 1400,
-                'EX SKY': 8000,
-                'AM': 745,
-                'UN AM': 1170,
-                'RA AM': 5800,
-                'EX AM': 0,
-                'SUN': 1400,
-                'UN SUN': 4400,
-                'GHOST H': 0
-                }
 
-BUY_ORDER_TABLE = { 'FLAX':         [50,    [9999, 6666]], # max_price, large_amount, small_amount 
-                    'HEMP':         [48,    [9999, 6666]], 
-                    'UN HEMP':      [175,   [7777, 5000]],
-                    'RA HEMP':      [980,   [1333, 666]],
-                    'EXPONE HEMP':  [6800,  [300, 150]],
-                    'SKY':          [260,   [9999, 4444]],
-                    'UN SKY':       [580,   [3333, 1666]],
-                    'RA SKY':       [1400,  [1111, 666]],
-                    'EX SKY':       [8000,  [300, 150]],
+BUY_ORDER_TABLE = { 'FLAX':         [57,    [9999, 6666]], # max_price, large_amount, small_amount 
+                    'HEMP':         [52,    [9999, 6666]], 
+                    'UN HEMP':      [180,   [7777, 5000]],
+                    'RA HEMP':      [995,   [1333, 666]],
+                    'EXPONE HEMP':  [7000,  [500, 125]],
+                    'SKY':          [280,   [9999, 4444]],
+                    'UN SKY':       [595,   [3333, 1666]],
+                    'RA SKY':       [1440,  [1111, 666]],
+                    'EX SKY':       [8400,  [250, 125]],
                     'AM':           [745,   [4444, 2666]],
                     'UN AM':        [1170,  [1666, 600]],
-                    'RA AM':        [5800,  [300, 150]],
+                    'RA AM':        [5900,  [200, 150]],
                     'EX AM':        [0,     [150, 50]],
-                    'SUN':          [1400,  [1666, 888]],
-                    'UN SUN':       [4400,  [600, 300]],
+                    'SUN':          [1500,  [1111, 666]],
+                    'UN SUN':       [4600,  [200, 150]],
                     'GHOST H':      [0,     [450, 200]]
                 }
 
@@ -75,7 +68,7 @@ class purchaseBot():
         @brief      Constructs a new instance.
 
         """
-        self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
+        self.screen = cv2.cvtColor(np.array(pyautogui.screenshot(region = SCREEN_REGION)), cv2.COLOR_BGR2GRAY)
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
         self.buy_order_price_region = np.array(pyautogui.screenshot(region = BUY_ORDER_PRICE_REGION))
 
@@ -101,7 +94,7 @@ class purchaseBot():
         @brief      Update screenshot.
 
         """
-        self.screen = np.array(pyautogui.screenshot(region = MARKET_REGION))
+        self.screen = cv2.cvtColor(np.array(pyautogui.screenshot(region = SCREEN_REGION)), cv2.COLOR_BGR2GRAY)
         self.price_region = np.array(pyautogui.screenshot(region = PRICE_REGION))
         self.buy_order_price_region = np.array(pyautogui.screenshot(region = BUY_ORDER_PRICE_REGION))
 
@@ -145,14 +138,15 @@ class purchaseBot():
         boxes = [line[0] for line in result]
         for i in range(len(txts)):
             if  scores[i] >= 0.98:
-                price = int(txts[i].replace(',', ''))
+                price = txts[i].replace(',', '')
+                price = int(price.replace(',', ''))
                 if  price <= max_price:
                     buy_button_position = (int(boxes[i][0][0] + PRICE_REGION[0] + 216), int(boxes[i][0][1] + PRICE_REGION[1] + 14))
                     # print(buy_button_position)
-                    self.mouse_move(buy_button_position)
+                    self.mouse_move(buy_button_position, duration=0.10)
                     time.sleep(0.2)
                     self.mouse_click()
-                    self.mouse_move((1011, 860), duration=0.15)
+                    self.mouse_move((1011, 860), duration=0.10)
                     time.sleep(0.2)
                     self.mouse_click()
                     time.sleep(0.1)
@@ -165,7 +159,7 @@ class purchaseBot():
         return False, result
 
 
-    def mouse_move(self, target, duration=0.3):
+    def mouse_move(self, target, duration=0.3, range = 5):
         """!
         @brief      Mouse move from position1 to position2
                     Simulate human mouse movement
@@ -174,17 +168,9 @@ class purchaseBot():
         @param      num_points: interval points between the two points
         """
 
-        # x1, y1 = pyautogui.position()
         x2, y2 = target
-        # sleep_duration = duration / num_points
-        # for _ in range(num_points):
-        #     x_offset = random.randint(-5, 5)
-        #     y_offset = random.randint(-5, 5)
-        #     x1 += (x2 - x1) / num_points + x_offset
-        #     y1 += (y2 - y1) / num_points + y_offset
-        #     pyautogui.moveTo(x1, y1, duration = sleep_duration, tween = pyautogui.easeInOutQuad)
             
-        pyautogui.moveTo(x2 + random.randint(-5, 5), y2 + random.randint(-5, 5), duration = duration, tween = pyautogui.easeInOutQuad)
+        pyautogui.moveTo(x2 + random.randint(-range, range), y2 + random.randint(-range, range), duration = duration, tween = pyautogui.easeInOutQuad)
 
 
     def mouse_click(self, clicks = 1):
@@ -277,8 +263,15 @@ class purchaseBot():
         """
         pyautogui.press('esc')
         pyautogui.keyUp('esc')
+        self.update_screenshot()
 
-        LOG_OUT_BUTTON = (1452, 198)
+        result = cv2.matchTemplate(self.screen, LOG_OUT, cv2.TM_CCOEFF_NORMED)
+        _, max_val_1, _, max_loc = cv2.minMaxLoc(result)
+        top_left = max_loc
+        center_x = top_left[0] + LOG_OUT.shape[1] // 2
+        center_y = top_left[1] + LOG_OUT.shape[0] // 2
+
+        LOG_OUT_BUTTON = (int(center_x), int(center_y))
         self.mouse_move(LOG_OUT_BUTTON)
         self.mouse_click()
         time.sleep(10)
@@ -291,6 +284,7 @@ class purchaseBot():
         
         @param      account: Account details or credentials for login.
         """
+
         LOG_IN_BUTTON = (765, 539)
         self.mouse_move(LOG_IN_BUTTON)
         time.sleep(0.3) 
@@ -316,7 +310,58 @@ class purchaseBot():
         ENTER_WORLD_BUTTON = (1079, 1022)
         self.mouse_move(ENTER_WORLD_BUTTON)
         self.mouse_click()
-        time.sleep(8) 
+        time.sleep(7)
+
+        while(self.check_advertisement()):
+            time.sleep(1)
+
+
+    def check_advertisement(self):
+        self.update_screenshot()
+
+        result_1 = cv2.matchTemplate(self.screen, AD_ACTIVITIES, cv2.TM_CCOEFF_NORMED)
+        result_2 = cv2.matchTemplate(self.screen, AD_FRACTIONWARFARE, cv2.TM_CCOEFF_NORMED)
+        result_3 = cv2.matchTemplate(self.screen, AD_TWITCHDROPS, cv2.TM_CCOEFF_NORMED)
+        result_4 = cv2.matchTemplate(self.screen, AD_UNCLAIMED_REWARDS, cv2.TM_CCOEFF_NORMED)
+        result_5 = cv2.matchTemplate(self.screen, AD_CROSS_PLATFORM, cv2.TM_CCOEFF_NORMED)
+
+        _, max_val_1, _, _ = cv2.minMaxLoc(result_1)
+        _, max_val_2, _, _ = cv2.minMaxLoc(result_2)
+        _, max_val_3, _, _ = cv2.minMaxLoc(result_3)
+        _, max_val_4, _, _ = cv2.minMaxLoc(result_4)
+        _, max_val_5, _, _ = cv2.minMaxLoc(result_5)
+
+        if max_val_4 >= 0.85:
+            self.mouse_move(UNCLAIMED_REWARDS_CLOSE_BUTTON)
+            time.sleep(0.3)
+            self.mouse_click()
+            return True 
+
+        elif max_val_1 >= 0.85:
+            self.mouse_move(ACTIVITIES_CLOSE_BUTTON)
+            time.sleep(0.3)
+            self.mouse_click()
+            return True
+
+        elif max_val_2 >= 0.85:
+            self.mouse_move(FRACTION_WARFARE_CLOSE_BUTTON)
+            time.sleep(0.3)
+            self.mouse_click()
+            return True
+
+        elif max_val_3 >= 0.85:
+            self.mouse_move(TWITCH_DROPS_CLOSE_BUTTON)
+            time.sleep(0.3)
+            self.mouse_click()
+            return True
+       
+        elif max_val_5 >= 0.85:
+            self.mouse_move(CROSS_PLATFORM_CLOSE_BUTTON)
+            time.sleep(0.3)
+            self.mouse_click()
+            return True
+
+        return False
 
 
     def open_market(self):
@@ -411,18 +456,16 @@ class purchaseBot():
         self.open_market()
         time.sleep(0.2)
 
-        for item in PRICE_TABLE.keys():
+        for item in BUY_ORDER_TABLE.keys():
             self.search_for_item(item)
             time.sleep(0.5)
 
             self.swipe_down() # we don't buy items that remain on top of the market
             time.sleep(0.2)
 
-            fail_count = 0
-
             while True:
                 self.update_screenshot()
-                success, result = self.buy_an_item(max_price=PRICE_TABLE[item])
+                success, result = self.buy_an_item(max_price=BUY_ORDER_TABLE[item][0])
                 
                 if success:
                     self.update_screenshot()
@@ -435,10 +478,7 @@ class purchaseBot():
                     else:
                         pass
                 else:
-                    fail_count += 1
-                    if fail_count == 2:
-                        break
-                    self.swipe_down()
+                    break
 
             time.sleep(0.2)
         self.store_money_in_guild_account()
@@ -467,7 +507,9 @@ class purchaseBot():
         if len(txts) > 1:
             print("Unpredictable ERROR Occurs, please report TXTS > 1")
             return False
-        price = int(txts[0].replace(',', ''))
+
+        price = txts[0].replace(',', '')
+        price = int(price.replace('.', ''))
 
         # price range
         if  price >= max_price:
@@ -485,15 +527,15 @@ class purchaseBot():
             time.sleep(0.3) 
             pyautogui.mouseUp()
             pyautogui.typewrite(str(amount[0]))
-            time.sleep(0.5)
+            time.sleep(0.8)
 
             SET_BUY_ORDER_PRICE = (720, 747)
-            self.mouse_move(SET_BUY_ORDER_PRICE)
+            self.mouse_move(SET_BUY_ORDER_PRICE, duration=0.3, range = 2)
             time.sleep(0.2)
             pyautogui.mouseDown()
             time.sleep(0.3) 
             pyautogui.mouseUp()
-            pyautogui.typewrite(str(int(max_price * 0.90) + 1))
+            pyautogui.typewrite(str(int(max_price * 0.925) + 1))
             time.sleep(0.5)
             
         elif price < max_price * 0.975 and price >= max_price * 0.925:
@@ -638,9 +680,10 @@ if __name__ == '__main__':
     time.sleep(1)
     for i in ACCOUNT_LIST:
         print(i)
-        # pBot.regular_purchase(i)
-        pBot.purchase_and_create_buy_order(i)
-
+        pBot.regular_purchase(i)
+        # pBot.purchase_and_create_buy_order(i)
+        # pBot.log_in(i)
+        # pBot.log_out()
         time.sleep(3)
 
 
