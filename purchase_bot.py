@@ -47,20 +47,20 @@ for line in lines:
 
 
 
-BUY_ORDER_TABLE = { 'FLAX':         [57,    [9999, 6666]], # max_price, large_amount, small_amount 
-                    'HEMP':         [52,    [9999, 6666]], 
-                    'UN HEMP':      [180,   [7777, 5000]],
-                    'RA HEMP':      [995,   [1333, 666]],
-                    'EXPONE HEMP':  [7000,  [500, 125]],
-                    'SKY':          [280,   [9999, 4444]],
-                    'UN SKY':       [595,   [3333, 1666]],
-                    'RA SKY':       [1440,  [1111, 666]],
-                    'EX SKY':       [8400,  [250, 125]],
-                    'AM':           [745,   [4444, 2666]],
-                    'UN AM':        [1170,  [1666, 600]],
-                    'RA AM':        [5900,  [200, 150]],
+BUY_ORDER_TABLE = { 'FLAX':         [55,    [9999, 6666]], # max_price, large_amount, small_amount 
+                    'HEMP':         [0,    [9999, 6666]], 
+                    'UN HEMP':      [0,   [7777, 5000]],
+                    'RA HEMP':      [980,   [888, 444]],
+                    'EXPONE HEMP':  [7250,  [200, 125]],
+                    'SKY':          [0,   [9999, 4444]],
+                    'UN SKY':       [0,   [3333, 1666]],
+                    'RA SKY':       [1500,  [666, 333]],
+                    'EX SKY':       [8250,  [150, 125]],
+                    'AM':           [740,   [2222, 1333]],
+                    'UN AM':        [1140,  [888, 600]],
+                    'RA AM':        [5750,  [150, 100]],
                     'EX AM':        [0,     [150, 50]],
-                    'SUN':          [1500,  [1111, 666]],
+                    'SUN':          [0,  [1111, 666]],
                     'UN SUN':       [4600,  [200, 150]],
                     'GHOST H':      [0,     [450, 200]]
                 }
@@ -143,7 +143,11 @@ class purchaseBot():
         for i in range(len(txts)):
             if  scores[i] >= 0.98:
                 price = txts[i].replace(',', '')
-                price = int(price.replace(',', ''))
+                price = price.replace(',', '')
+                try:
+                    price = int(price)
+                except:
+                    return False, result
                 if  price <= max_price:
                     buy_button_position = (int(boxes[i][0][0] + PRICE_REGION[0] + 216), int(boxes[i][0][1] + PRICE_REGION[1] + 14))
                     # print(buy_button_position)
@@ -478,6 +482,8 @@ class purchaseBot():
         time.sleep(0.2)
 
         for item in BUY_ORDER_TABLE.keys():
+            if BUY_ORDER_TABLE[item][0] == 0:
+                continue
             self.search_for_item(item)
             time.sleep(0.5)
 
@@ -528,10 +534,12 @@ class purchaseBot():
         if len(txts) > 1:
             print("Unpredictable ERROR Occurs, please report TXTS > 1")
             return False
-
         price = txts[0].replace(',', '')
-        price = int(price.replace('.', ''))
-
+        price = price.replace('.', '')
+        try:
+            price = int(price)
+        except:
+            return False
         # price range
         if  price >= max_price:
             self.mouse_move((1070, 387))
@@ -640,6 +648,8 @@ class purchaseBot():
         time.sleep(0.2)
 
         for item in BUY_ORDER_TABLE.keys():
+            if BUY_ORDER_TABLE[item][0] == 0:
+                continue
             self.search_for_item(item)
             time.sleep(0.5)
 
