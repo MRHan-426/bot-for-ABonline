@@ -46,24 +46,26 @@ for line in lines:
     ACCOUNT_LIST.append(line.strip())
 
 
-
-BUY_ORDER_TABLE = { 'FLAX':         [55,    [9999, 6666]], # max_price, large_amount, small_amount 
+BUY_ORDER_TABLE = { 'FLAX':         [53,    [8888, 5555]], # max_price, large_amount, small_amount 
                     'HEMP':         [0,    [9999, 6666]], 
-                    'UN HEMP':      [0,   [7777, 5000]],
-                    'RA HEMP':      [980,   [888, 444]],
-                    'EXPONE HEMP':  [7250,  [200, 125]],
-                    'SKY':          [0,   [9999, 4444]],
-                    'UN SKY':       [0,   [3333, 1666]],
-                    'RA SKY':       [1500,  [666, 333]],
-                    'EX SKY':       [8250,  [150, 125]],
-                    'AM':           [740,   [2222, 1333]],
-                    'UN AM':        [1140,  [888, 600]],
-                    'RA AM':        [5750,  [150, 100]],
+                    'UN HEMP':      [175,   [9999, 6666]],
+                    'RA HEMP':      [1000,   [1222, 999]],
+                    'EXPONE HEMP':  [7000,  [300, 300]],
+                    'SKY':          [270,   [6666, 4444]],
+                    'UN SKY':       [600,   [3333, 2222]],
+                    'RA SKY':       [1450,  [1111, 888]],
+                    'EX SKY':       [8300,  [200, 150]],
+                    'AM':           [740,   [4444, 3666]],
+                    'UN AM':        [1100,  [1666, 1111]],
+                    'RA AM':        [5555,  [250, 150]],
                     'EX AM':        [0,     [150, 50]],
-                    'SUN':          [0,  [1111, 666]],
-                    'UN SUN':       [4600,  [200, 150]],
-                    'GHOST H':      [0,     [450, 200]]
+                    'SUN':          [1520,  [1111, 888]],
+                    'UN SUN':       [4500,  [300, 250]],
+                    'GHOST H':      [6000,  [300, 200]]
                 }
+
+
+
 
 
 class purchaseBot():
@@ -78,7 +80,23 @@ class purchaseBot():
 
         self.bottom_check_window = np.array(pyautogui.screenshot(region = BOTTOM_CHECK_REIGION))
         self.bottom_check_window = cv2.cvtColor(self.bottom_check_window, cv2.COLOR_BGR2GRAY)
-
+        self.BUY_ORDER_COUNT = { 'FLAX':     0, #amount 
+                    'HEMP':     0, 
+                    'UN HEMP':  0,
+                    'RA HEMP':  0,
+                    'EXPONE HEMP':  0,
+                    'SKY':  0,
+                    'UN SKY':  0,
+                    'RA SKY':  0,
+                    'EX SKY':  0,
+                    'AM':      0,
+                    'UN AM':   0,
+                    'RA AM':   0,
+                    'EX AM':   0,
+                    'SUN':     0,
+                    'UN SUN':  0,
+                    'GHOST H': 0
+                }
 
     def find_buy_button(self):
         """!
@@ -141,7 +159,7 @@ class purchaseBot():
         scores = [line[1][1] for line in result]
         boxes = [line[0] for line in result]
         for i in range(len(txts)):
-            if  scores[i] >= 0.98:
+            if  scores[i] >= 0.97:
                 price = txts[i].replace(',', '')
                 price = price.replace(',', '')
                 try:
@@ -517,7 +535,8 @@ class purchaseBot():
         print("Regular Purchase routine Finish")
 
 
-    def create_buy_order(self, amount: List[int], max_price: int):
+    def create_buy_order(self, amount: List[int], max_price: int, feedback = False, item_type = None):
+        actual_amount = 0
         BUY_ORDER_BUTTON_POSITION = (650, 644)
         self.mouse_move(BUY_ORDER_BUTTON_POSITION)
         time.sleep(0.2)
@@ -556,6 +575,7 @@ class purchaseBot():
             time.sleep(0.3) 
             pyautogui.mouseUp()
             pyautogui.typewrite(str(amount[0]))
+            actual_amount = amount[0]
             time.sleep(0.8)
 
             SET_BUY_ORDER_PRICE = (720, 747)
@@ -575,6 +595,7 @@ class purchaseBot():
             time.sleep(0.3) 
             pyautogui.mouseUp()
             pyautogui.typewrite(str(amount[0]))
+            actual_amount = amount[0]
             time.sleep(0.5)
 
             PRICE_ADD_BUTTON_POSITION = (983, 749)
@@ -591,6 +612,7 @@ class purchaseBot():
             time.sleep(0.3) 
             pyautogui.mouseUp()
             pyautogui.typewrite(str(amount[1]))
+            actual_amount = amount[1]
             time.sleep(0.5)
 
             PRICE_ADD_BUTTON_POSITION = (983, 749)
@@ -630,10 +652,12 @@ class purchaseBot():
         self.mouse_click()
         time.sleep(0.2)
 
+        if feedback:
+            self.BUY_ORDER_COUNT[item_type] += actual_amount
         return True
 
 
-    def purchase_and_create_buy_order(self, account:str):
+    def purchase_and_create_buy_order(self, account:str, feedback = False):
         self.mouse_move((794,23))
         self.mouse_click()
         time.sleep(1)
@@ -677,7 +701,7 @@ class purchaseBot():
                         time.sleep(0.2)
                         self.mouse_click()
                         time.sleep(0.2)
-                        buyorder_success = self.create_buy_order(BUY_ORDER_TABLE[item][1], BUY_ORDER_TABLE[item][0])
+                        buyorder_success = self.create_buy_order(BUY_ORDER_TABLE[item][1], BUY_ORDER_TABLE[item][0], feedback=feedback, item_type=item)
                         break
                     else:
                         break
@@ -709,7 +733,7 @@ if __name__ == '__main__':
     pBot.mouse_move((794,23))
     pBot.mouse_click()
     time.sleep(1)
-    for i in ACCOUNT_LIST[:5]:
+    for i in ACCOUNT_LIST:
         print(i)
         pBot.regular_purchase(i)
         # pBot.purchase_and_create_buy_order(i)

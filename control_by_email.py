@@ -46,30 +46,34 @@ def read_latest_email():
     email_pass = EMAIL_PASS
     mail_server = MAIL_SERVER
     imap_port = 993
+    try:
+        mail = imaplib.IMAP4_SSL(mail_server, imap_port)
+        mail.login(email_user, email_pass)
 
-    mail = imaplib.IMAP4_SSL(mail_server, imap_port)
-    mail.login(email_user, email_pass)
+        mailbox = "INBOX"
+        mail.select(mailbox)
+        status, email_ids = mail.search(None, "ALL")
+        email_id_list = email_ids[0].split()
 
-    mailbox = "INBOX"
-    mail.select(mailbox)
-    status, email_ids = mail.search(None, "ALL")
-    email_id_list = email_ids[0].split()
+        if not email_id_list:
+            mail.logout()
+            return None, None
+        latest_email_id = email_id_list[-1]
+        status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
+        raw_email = msg_data[0][1]
+        email_message = email.message_from_bytes(raw_email)
+        subject, encoding = decode_header(email_message["Subject"])[0]
+        if encoding:
+            subject = subject.decode(encoding)
+        else:
+            subject = str(subject)
 
-    if not email_id_list:
+        from_address = email_message.get("From")
         mail.logout()
+        return subject, from_address
+
+    except:
         return None, None
-    latest_email_id = email_id_list[-1]
-    status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
-    raw_email = msg_data[0][1]
-    email_message = email.message_from_bytes(raw_email)
-    subject, encoding = decode_header(email_message["Subject"])[0]
-    if encoding:
-        subject = subject.decode(encoding)
-    else:
-        subject = str(subject)
-
-    from_address = email_message.get("From")
-
     # if email_message.is_multipart():
     #     for part in email_message.walk():
     #         content_type = part.get_content_type()
@@ -77,8 +81,6 @@ def read_latest_email():
     #             body = part.get_payload(decode=True).decode()
     #             print("Body:", body)
     #             break
-    mail.logout()
-    return subject, from_address
 
 
 def send_email(subject:str, body:str):
@@ -154,7 +156,7 @@ if __name__ == '__main__':
                 print("regular purchase end")
                 success = send_email("Regular purchase finished", body="")
 
-            elif subject == "order":
+            elif subject == "order" or subject == "Order":
                 print("start buy order")
                 delete_latest_email()
                 success = send_email("Buy Order Start", body="")
@@ -164,10 +166,11 @@ if __name__ == '__main__':
                 time.sleep(1)
                 for i in ACCOUNT_LIST[:5]:
                     print(i)
-                    pBot.purchase_and_create_buy_order(i)
+                    pBot.purchase_and_create_buy_order(i, feedback=True)
                     time.sleep(3)
                 print("Buy Order end")
-                success = send_email("Buy order completed", body="")
+                data_str = "\n".join([f"{key}: {value}" for key, value in pBot.BUY_ORDER_COUNT.items()])
+                success = send_email("Buy order completed", body=f"Order details:\n\n{data_str}")
         else:
             print("waiting for operations")
             pass
